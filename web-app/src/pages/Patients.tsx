@@ -55,11 +55,14 @@ export default function Patients() {
   }
 
   const handleRiskFilter = (risk: RiskLevel | null) => {
+    const params = Object.fromEntries(searchParams)
     if (risk) {
-      setSearchParams({ risk })
+      params.risk = risk
     } else {
-      setSearchParams({})
+      delete params.risk
     }
+    params.page = '0' // Reset to first page when filter changes
+    setSearchParams(params)
   }
 
   const handleRegistrationSuccess = () => {
@@ -239,7 +242,7 @@ export default function Patients() {
                   variant="secondary"
                   size="sm"
                   disabled={patients.first}
-                  onClick={() => setSearchParams({ page: String(page - 1) })}
+                  onClick={() => setSearchParams({ ...Object.fromEntries(searchParams), page: String(page - 1) })}
                 >
                   Previous
                 </Button>
@@ -247,7 +250,7 @@ export default function Patients() {
                   variant="secondary"
                   size="sm"
                   disabled={patients.last}
-                  onClick={() => setSearchParams({ page: String(page + 1) })}
+                  onClick={() => setSearchParams({ ...Object.fromEntries(searchParams), page: String(page + 1) })}
                 >
                   Next
                 </Button>
