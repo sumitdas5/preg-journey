@@ -20,7 +20,7 @@ import {
 } from '@/components/ui'
 import { alertService, consultationService, followUpService, healthCheckService, patientService, userService } from '@/services'
 import { useAuthStore } from '@/store/authStore'
-import { ConsultationRequest, ConsultationType, DeliveryCompletionRequest, DeliveryOutcome, DeliveryType, Patient, User, UserRole, PreviousPregnancy, PregnancyOutcome } from '@/types'
+import { ConsultationRequest, ConsultationType, DeliveryCompletionRequest, DeliveryOutcome, DeliveryType, PaginatedResponse, Patient, User, UserRole, PreviousPregnancy, PregnancyOutcome } from '@/types'
 import {
     ArrowLeftIcon,
     CalendarIcon,
@@ -152,6 +152,27 @@ export default function PatientDetail() {
   const deleteMutation = useMutation({
     mutationFn: () => patientService.delete(patientId),
     onSuccess: () => {
+      queryClient.setQueriesData<PaginatedResponse<Patient>>(
+        { queryKey: ['patients'] },
+        (oldData) => {
+          if (!oldData) return oldData
+
+          const filteredContent = oldData.content.filter((p) => p.id !== patientId)
+          const wasRemoved = filteredContent.length !== oldData.content.length
+
+          if (!wasRemoved) {
+            return oldData
+          }
+
+          return {
+            ...oldData,
+            content: filteredContent,
+            totalElements: Math.max(0, oldData.totalElements - 1),
+          }
+        }
+      )
+      queryClient.removeQueries({ queryKey: ['patient', patientId] })
+      queryClient.invalidateQueries({ queryKey: ['patients'] })
       toast.success('Patient deleted successfully')
       navigate('/patients')
     },
